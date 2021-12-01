@@ -33,8 +33,8 @@ pub mod day_1 {
 
     pub fn part_2(numbers: &[u32]) -> u32 {
         let mut count = 0;
-        for i in 0..numbers.len() - 3 {
-            if numbers[i] < numbers[i + 3] {
+        for i in 3..numbers.len() {
+            if numbers[i - 3] < numbers[i] {
                 count += 1;
             }
         }
