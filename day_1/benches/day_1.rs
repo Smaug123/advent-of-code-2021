@@ -5,7 +5,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     let input = input();
     c.bench_function("day 1 part 1", |b| {
         b.iter(|| {
-            part_1(&input);
+            part_1(&mut input.iter().copied());
         })
     });
     c.bench_function("day 1 part 2", |b| {
