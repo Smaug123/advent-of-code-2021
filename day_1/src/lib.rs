@@ -27,8 +27,19 @@ pub mod day_1 {
         }
     }
 
-    pub fn part_2(numbers: &[u32]) -> u32 {
+    pub fn part_2_naive(numbers: &[u32]) -> u32 {
         part_1(&mut numbers.windows(3).map(|x| x[0] + x[1] + x[2]))
+    }
+
+    pub fn part_2(numbers: &[u32]) -> u32 {
+        let mut count = 0;
+        for i in 0..numbers.len() - 3 {
+            if numbers[i] < numbers[i + 3] {
+                count += 1;
+            }
+        }
+
+        count
     }
 }
 
