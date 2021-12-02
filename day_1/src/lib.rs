@@ -1,17 +1,17 @@
 pub mod day_1 {
 
-    pub fn input() -> Vec<u32> {
+    pub fn input() -> Vec<u16> {
         let input = include_str!("../input.txt");
         input
             .trim()
             .split('\n')
-            .map(|l| str::parse::<u32>(l).unwrap())
-            .collect::<Vec<u32>>()
+            .map(|l| str::parse::<u16>(l).unwrap())
+            .collect::<Vec<u16>>()
     }
 
-    pub fn part_1<T>(numbers: &mut T) -> u32
+    pub fn part_1<T>(numbers: &mut T) -> u16
     where
-        T: Iterator<Item = u32>,
+        T: Iterator<Item = u16>,
     {
         let mut count = 0;
         let mut previous = 0;
@@ -27,11 +27,11 @@ pub mod day_1 {
         }
     }
 
-    pub fn part_2_naive(numbers: &[u32]) -> u32 {
+    pub fn part_2_naive(numbers: &[u16]) -> u16 {
         part_1(&mut numbers.windows(3).map(|x| x[0] + x[1] + x[2]))
     }
 
-    pub fn part_2(numbers: &[u32]) -> u32 {
+    pub fn part_2(numbers: &[u16]) -> u16 {
         let mut count = 0;
         for i in 3..numbers.len() {
             if numbers[i - 3] < numbers[i] {
