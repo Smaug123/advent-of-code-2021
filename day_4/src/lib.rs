@@ -19,7 +19,7 @@ pub mod day_4 {
             None => None,
             Some("") => {
                 let mut answer = [[(0, false); 5]; 5];
-                for i in 0..5 {
+                for row in &mut answer {
                     let numbers = input
                         .next()
                         .unwrap()
@@ -27,7 +27,7 @@ pub mod day_4 {
                         .map(str::parse::<u8>)
                         .map(|i| i.unwrap());
                     for (j, entry) in numbers.enumerate() {
-                        answer[i][j] = (entry, false);
+                        row[j] = (entry, false);
                     }
                 }
                 Some(Board { arr: answer })
