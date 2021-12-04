@@ -60,15 +60,13 @@ pub mod day_3 {
     where
         I: Iterator<Item = bool>,
     {
-        let mut falses = 0;
-        let mut trues = 0;
-        for elt in input {
+        let (falses, trues) = input.fold((0, 0), |(falses, trues), elt| {
             if elt {
-                trues += 1;
+                (falses, trues + 1)
             } else {
-                falses += 1;
+                (falses + 1, trues)
             }
-        }
+        });
         if trues + falses == 1 {
             return None;
         }
@@ -104,7 +102,10 @@ pub mod day_3 {
         }
     }
 
-    fn agree<const N: usize>(b1: &[bool; N], b2: &[bool; N], count: usize) -> bool {
+    fn agree<T, const N: usize>(b1: &[T; N], b2: &[T; N], count: usize) -> bool
+    where
+        T: Eq,
+    {
         for i in 0..count {
             if b1[i] != b2[i] {
                 return false;

@@ -75,7 +75,7 @@ pub mod day_2 {
         y: u32,
     }
 
-    fn step(position: Position, movement: &Movement) -> Position {
+    const fn step(position: Position, movement: &Movement) -> Position {
         match movement.direction {
             Direction::Forward => Position {
                 x: position.x + movement.distance,
@@ -104,7 +104,7 @@ pub mod day_2 {
         aim: u32,
     }
 
-    fn step_2(position: Position2, movement: &Movement) -> Position2 {
+    const fn step_2(position: Position2, movement: &Movement) -> Position2 {
         match movement.direction {
             Direction::Forward => Position2 {
                 aim: position.aim,
