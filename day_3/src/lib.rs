@@ -188,7 +188,7 @@ mod tests {
     }
 
     #[test]
-    fn test_day_2() {
+    fn test_day_3() {
         let input = input::<12>();
         assert_eq!(part_1(&input), 3374136);
         assert_eq!(part_2(&input), 4432698);
