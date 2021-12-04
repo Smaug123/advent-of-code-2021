@@ -18,8 +18,8 @@ pub mod day_4 {
         match input.next() {
             None => None,
             Some("") => {
-                let answer = [[(0, false); 5]; 5];
-                for mut row in answer {
+                let mut answer = [[(0, false); 5]; 5];
+                for i in 0..5 {
                     let numbers = input
                         .next()
                         .unwrap()
@@ -27,7 +27,7 @@ pub mod day_4 {
                         .map(str::parse::<u8>)
                         .map(|i| i.unwrap());
                     for (j, entry) in numbers.enumerate() {
-                        row[j] = (entry, false);
+                        answer[i][j] = (entry, false);
                     }
                 }
                 Some(Board { arr: answer })
