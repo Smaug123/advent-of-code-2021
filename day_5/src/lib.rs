@@ -109,21 +109,21 @@ pub mod day_5 {
         }
     }
 
-    fn do_it(board: &mut Board<usize>, data: &[Line], enable_diagonal: bool) {
+    fn do_it(board: &mut Board<u16>, data: &[Line], enable_diagonal: bool) {
         for (line_num, line) in data.iter().enumerate() {
             if line.start.x == line.end.x {
                 let bottom = min(line.start.y, line.end.y);
                 let top = max(line.start.y, line.end.y);
                 let x = line.start.x;
                 for y in bottom..=top {
-                    set_at(board, x, y, line_num);
+                    set_at(board, x, y, line_num as u16);
                 }
             } else if line.start.y == line.end.y {
                 let y = line.start.y;
                 let bottom = min(line.start.x, line.end.x);
                 let top = max(line.start.x, line.end.x);
                 for x in bottom..=top {
-                    set_at(board, x, y, line_num);
+                    set_at(board, x, y, line_num as u16);
                 }
             } else if enable_diagonal {
                 let (left_point, right_point) = if line.start.x < line.end.x {
@@ -134,11 +134,11 @@ pub mod day_5 {
 
                 if left_point.y < right_point.y {
                     for i in 0..=right_point.y - left_point.y {
-                        set_at(board, left_point.x + i, left_point.y + i, line_num);
+                        set_at(board, left_point.x + i, left_point.y + i, line_num as u16);
                     }
                 } else {
                     for i in 0..=left_point.y - right_point.y {
-                        set_at(board, left_point.x + i, left_point.y - i, line_num);
+                        set_at(board, left_point.x + i, left_point.y - i, line_num as u16);
                     }
                 }
             }
