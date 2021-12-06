@@ -49,6 +49,7 @@ pub mod day_6 {
             // and we create a fish now, which spawns eventually...
                 + fish_created_given_spawning(fish_cache, days - 7)
         } else if days > 7 {
+            // In principle this could be tail-called, but I can't be bothered.
             fish_created_given_spawning(fish_cache, days - 7) + 1
         } else {
             2
@@ -57,8 +58,6 @@ pub mod day_6 {
         result
     }
 
-    // f(3, 18) = 4
-    // f(4, 18) = 2 + 1 + 1
     fn fish_created(fish_cache: &mut [u64], start: u8, days: u16) -> u64 {
         if days == 0 {
             return 1;
