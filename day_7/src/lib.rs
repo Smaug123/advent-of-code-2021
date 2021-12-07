@@ -79,6 +79,6 @@ mod tests {
     fn test_day_7() {
         let input = input();
         assert_eq!(part_1(&input), 356992);
-        assert_eq!(part_2(&input), 0);
+        assert_eq!(part_2(&input), 101268110);
     }
 }
