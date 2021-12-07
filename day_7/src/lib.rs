@@ -20,18 +20,33 @@ pub mod day_7 {
         parse(include_str!("../input.txt"))
     }
 
+    fn min_convex<I, T>(mut data: I) -> Option<T>
+    where
+        I: Iterator<Item = T>,
+        T: Ord,
+    {
+        let mut fst = data.next()?;
+        loop {
+            let next = data.next();
+            match next {
+                None => {
+                    return Some(fst);
+                }
+                Some(next) => {
+                    if fst > next {
+                        fst = next;
+                    } else {
+                        return Some(fst);
+                    }
+                }
+            }
+        }
+    }
+
     pub fn part_1(data: &[u16]) -> u32 {
         let max = *data.iter().max().unwrap();
-        (0..=max)
-            .map(|i| {
-                (
-                    i,
-                    data.iter().map(|value| difference(i, *value) as u32).sum(),
-                )
-            })
-            .min_by_key(|(_, i)| *i)
+        min_convex((0..=max).map(|i| data.iter().map(|value| difference(i, *value) as u32).sum()))
             .unwrap()
-            .1
     }
 
     const fn triangle(i: u32) -> u32 {
@@ -40,18 +55,12 @@ pub mod day_7 {
 
     pub fn part_2(data: &[u16]) -> u32 {
         let max = *data.iter().max().unwrap();
-        (0..=max)
-            .map(|i| {
-                (
-                    i,
-                    data.iter()
-                        .map(|value| triangle(difference(i, *value) as u32))
-                        .sum(),
-                )
-            })
-            .min_by_key(|(_, i)| *i)
-            .unwrap()
-            .1
+        min_convex((0..=max).map(|i| {
+            data.iter()
+                .map(|value| triangle(difference(i, *value) as u32))
+                .sum()
+        }))
+        .unwrap()
     }
 }
 
