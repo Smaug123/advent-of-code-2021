@@ -43,9 +43,33 @@ pub mod day_7 {
         }
     }
 
+    fn min_max<I, T>(mut data: I) -> Option<(T, T)>
+    where
+        I: Iterator<Item = T>,
+        T: Ord + Copy,
+    {
+        let mut min = data.next()?;
+        let mut max = min;
+        loop {
+            let next = data.next();
+            match next {
+                None => {
+                    return Some((min, max));
+                }
+                Some(next) => {
+                    if next < min {
+                        min = next;
+                    } else if next > max {
+                        max = next;
+                    }
+                }
+            }
+        }
+    }
+
     pub fn part_1(data: &[u16]) -> u32 {
-        let max = *data.iter().max().unwrap();
-        min_convex((0..=max).map(|i| data.iter().map(|value| difference(i, *value) as u32).sum()))
+        let (&min, &max) = min_max(data.iter()).unwrap();
+        min_convex((min..=max).map(|i| data.iter().map(|value| difference(i, *value) as u32).sum()))
             .unwrap()
     }
 
@@ -54,8 +78,8 @@ pub mod day_7 {
     }
 
     pub fn part_2(data: &[u16]) -> u32 {
-        let max = *data.iter().max().unwrap();
-        min_convex((0..=max).map(|i| {
+        let (&min, &max) = min_max(data.iter()).unwrap();
+        min_convex((min..=max).map(|i| {
             data.iter()
                 .map(|value| triangle(difference(i, *value) as u32))
                 .sum()
