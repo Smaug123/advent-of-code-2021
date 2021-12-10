@@ -15,16 +15,13 @@ pub mod day_1 {
     {
         let mut count = 0;
         let mut previous = 0;
-        loop {
-            if let Some(i) = numbers.next() {
-                if previous < i {
-                    count += 1;
-                }
-                previous = i;
-            } else {
-                return count - 1;
+        for i in numbers {
+            if previous < i {
+                count += 1;
             }
+            previous = i;
         }
+        count - 1
     }
 
     pub fn part_2_naive(numbers: &[u16]) -> u16 {
