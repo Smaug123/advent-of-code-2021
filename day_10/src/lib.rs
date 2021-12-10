@@ -23,7 +23,10 @@ pub mod day_10 {
     }
 
     /// Return Ok(first illegal char), or Err(ending) for an incomplete string.
-    fn syntax_error(s: &str) -> Result<char, Vec<char>> {
+    fn syntax_error<F, T>(s: &str, incomplete_handle: F) -> Result<char, T>
+    where
+        F: FnOnce(Vec<char>) -> T,
+    {
         let mut stack = Vec::new();
         for c in s.chars() {
             match closing(c) {
@@ -43,12 +46,13 @@ pub mod day_10 {
             }
         }
         stack.reverse();
-        Err(stack)
+        let answer = incomplete_handle(stack);
+        Err(answer)
     }
 
     pub fn part_1(data: &[&str]) -> u32 {
         data.iter()
-            .map(|line| match syntax_error(line) {
+            .map(|line| match syntax_error(line, |_| {}) {
                 Ok(')') => 3,
                 Ok(']') => 57,
                 Ok('}') => 1197,
@@ -62,22 +66,26 @@ pub mod day_10 {
     pub fn part_2(data: &[&str]) -> u64 {
         let mut scores: Vec<u64> = data
             .iter()
-            .filter_map(|line| match syntax_error(line) {
-                Err(completion) => Some(
-                    completion
-                        .iter()
-                        .map(|c| match c {
-                            ')' => 1,
-                            ']' => 2,
-                            '}' => 3,
-                            '>' => 4,
-                            _ => {
-                                panic!("Unexpected");
-                            }
-                        })
-                        .fold(0, |state, new_val| state * 5 + new_val),
-                ),
-                Ok(_) => None,
+            .filter_map(|line| {
+                match syntax_error(line, |completion| {
+                    Some(
+                        completion
+                            .iter()
+                            .map(|c| match c {
+                                ')' => 1,
+                                ']' => 2,
+                                '}' => 3,
+                                '>' => 4,
+                                _ => {
+                                    panic!("Unexpected");
+                                }
+                            })
+                            .fold(0, |state, new_val| state * 5 + new_val),
+                    )
+                }) {
+                    Ok(_) => None,
+                    Err(v) => v,
+                }
             })
             .collect();
         scores.sort_unstable();
