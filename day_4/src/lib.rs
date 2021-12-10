@@ -47,16 +47,10 @@ pub mod day_4 {
                 .map(|i| i.unwrap())
                 .collect::<Vec<u8>>();
             let mut boards = Vec::new();
-            loop {
-                match chomp_board(&mut input) {
-                    None => {
-                        return Data { boards, draws };
-                    }
-                    Some(board) => {
-                        boards.push(board);
-                    }
-                }
+            while let Some(board) = chomp_board(&mut input) {
+                boards.push(board);
             }
+            Data { boards, draws }
         } else {
             panic!("Unexpectedly no first line");
         }

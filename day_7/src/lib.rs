@@ -26,21 +26,14 @@ pub mod day_7 {
         T: Ord,
     {
         let mut fst = data.next()?;
-        loop {
-            let next = data.next();
-            match next {
-                None => {
-                    return Some(fst);
-                }
-                Some(next) => {
-                    if fst > next {
-                        fst = next;
-                    } else {
-                        return Some(fst);
-                    }
-                }
-            }
+        for next in data {
+            if fst > next {
+                fst = next;
+            } else {
+                return Some(fst);
+            };
         }
+        Some(fst)
     }
 
     fn min_max<I, T>(mut data: I) -> Option<(T, T)>
@@ -50,21 +43,14 @@ pub mod day_7 {
     {
         let mut min = data.next()?;
         let mut max = min;
-        loop {
-            let next = data.next();
-            match next {
-                None => {
-                    return Some((min, max));
-                }
-                Some(next) => {
-                    if next < min {
-                        min = next;
-                    } else if next > max {
-                        max = next;
-                    }
-                }
-            }
+        for next in data {
+            if next < min {
+                min = next;
+            } else if next > max {
+                max = next;
+            };
         }
+        Some((min, max))
     }
 
     pub fn part_1(data: &[u16]) -> u32 {
