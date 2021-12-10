@@ -8,7 +8,7 @@ pub mod day_10 {
         parse(include_str!("../input.txt"))
     }
 
-    fn closing(c: char) -> Option<char> {
+    const fn closing(c: char) -> Option<char> {
         if c == '[' {
             Some(']')
         } else if c == '{' {
@@ -23,6 +23,7 @@ pub mod day_10 {
     }
 
     /// Return Ok(first illegal char), or Err(ending) for an incomplete string.
+    /// The function takes the stack with the earliest element being the first one pushed.
     fn syntax_error<F, T>(s: &str, incomplete_handle: F) -> Result<char, T>
     where
         F: FnOnce(Vec<char>) -> T,
@@ -45,7 +46,6 @@ pub mod day_10 {
                 },
             }
         }
-        stack.reverse();
         let answer = incomplete_handle(stack);
         Err(answer)
     }
@@ -71,6 +71,7 @@ pub mod day_10 {
                     Some(
                         completion
                             .iter()
+                            .rev()
                             .map(|c| match c {
                                 ')' => 1,
                                 ']' => 2,
@@ -88,6 +89,7 @@ pub mod day_10 {
                 }
             })
             .collect();
+        // This can be done in linear time using two heaps, but life is too short
         scores.sort_unstable();
         scores[scores.len() / 2]
     }
