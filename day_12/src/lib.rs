@@ -229,7 +229,7 @@ start-RW";
     }
 
     #[test]
-    fn test_day_10() {
+    fn test_day_12() {
         let input = input();
         assert_eq!(part_1(&input), 5958);
         assert_eq!(part_2(&input), 150426);
