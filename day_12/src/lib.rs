@@ -5,7 +5,7 @@ pub mod day_12 {
     #[derive(Debug)]
     pub struct Cave<'a> {
         is_big: bool,
-        name: &'a str,
+        _name: &'a str,
     }
 
     #[derive(Debug)]
@@ -27,7 +27,10 @@ pub mod day_12 {
                 let is_big = name.chars().next().unwrap().is_uppercase();
                 let i = caves.caves.len() as u16;
                 mapping.insert(name, i);
-                caves.caves.push(Cave { is_big, name });
+                caves.caves.push(Cave {
+                    is_big,
+                    _name: name,
+                });
                 caves.edges.push(HashSet::new());
                 if caves.start == 0 && name == "start" {
                     caves.start = i;

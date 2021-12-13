@@ -94,7 +94,7 @@ pub mod day_2 {
 
     pub fn part_1(movements: &[Movement]) -> u32 {
         let start_pos = Position { x: 0, y: 0 };
-        let final_pos = movements.iter().fold(start_pos, |pos, dir| step(pos, dir));
+        let final_pos = movements.iter().fold(start_pos, step);
         final_pos.x * final_pos.y
     }
 
@@ -130,9 +130,7 @@ pub mod day_2 {
             depth: 0,
             aim: 0,
         };
-        let final_pos = movements
-            .iter()
-            .fold(start_pos, |pos, dir| step_2(pos, dir));
+        let final_pos = movements.iter().fold(start_pos, step_2);
         final_pos.x * final_pos.depth
     }
 }
