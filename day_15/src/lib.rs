@@ -30,7 +30,7 @@ pub mod day_15 {
             visited.insert(current_node);
             to_visit.remove(current_node);
 
-            let outgoing = match graph.edges.get(&current_node) {
+            let outgoing = match graph.edges.get(current_node) {
                 None => {
                     panic!("Vertex did not have an entry in the outgoing edges");
                 }
@@ -64,8 +64,41 @@ pub mod day_15 {
         }
     }
 
+    #[derive(Eq, PartialEq, Hash, Copy, Clone, Debug)]
+    pub(crate) struct Point {
+        x: u16,
+        y: u16,
+    }
+
+    struct PointHasher {
+        state: u32,
+    }
+
+    impl std::hash::Hasher for PointHasher {
+        fn finish(&self) -> u64 {
+            self.state as u64
+        }
+
+        fn write_u16(&mut self, coord: u16) {
+            self.state = self.state * 65536 + coord as u32;
+        }
+
+        fn write(&mut self, _bytes: &[u8]) {
+            panic!("Never!");
+        }
+    }
+
+    struct BuildPointHasher {}
+
+    impl std::hash::BuildHasher for BuildPointHasher {
+        type Hasher = PointHasher;
+        fn build_hasher(&self) -> PointHasher {
+            PointHasher { state: 0 }
+        }
+    }
+
     pub struct VertexWeightedGraph<V> {
-        vertices: HashMap<V, (u8, HashSet<V>)>,
+        vertices: HashMap<V, (u8, HashSet<V, BuildPointHasher>), BuildPointHasher>,
     }
 
     fn to_edge_weighted<V>(v: &VertexWeightedGraph<V>) -> EdgeWeightedGraph<V>
@@ -85,52 +118,148 @@ pub mod day_15 {
         EdgeWeightedGraph { edges }
     }
 
-    pub(crate) fn parse(s: &str) -> VertexWeightedGraph<(u16, u16)> {
-        let mut vertices: HashMap<(u16, u16), (u8, HashSet<(u16, u16)>)> = HashMap::new();
-        for (i, line) in s.split('\n').enumerate() {
-            for (j, height) in line.chars().enumerate() {
-                let height = height as u8 - b'0';
-                let i_16 = i as u16;
-                let j_16 = j as u16;
+    // TODO: commonise with day 9
+    #[derive(Debug, Clone)]
+    pub struct Array<T> {
+        row_len: usize,
+        elts: Vec<T>,
+    }
 
-                let mut outgoing = HashSet::with_capacity(4);
-                if i > 0 {
-                    outgoing.insert((i_16 - 1, j_16));
+    impl<T> Array<T> {
+        fn col_len(&self) -> usize {
+            self.elts.len() / self.row_len
+        }
+        fn get(&self, row: usize, col: usize) -> T
+        where
+            T: Copy,
+        {
+            self.elts[row * self.row_len + col]
+        }
+        fn set(&mut self, row: usize, col: usize, val: T)
+        where
+            T: Copy,
+        {
+            self.elts[row * self.row_len + col] = val;
+        }
+    }
+
+    pub(crate) fn parse(s: &str) -> Array<u8> {
+        let mut answer = Array {
+            row_len: 0,
+            elts: Vec::new(),
+        };
+        for line in s.split('\n') {
+            if answer.row_len == 0 {
+                answer.row_len = line.len();
+            }
+            answer
+                .elts
+                .extend(line.chars().map(|c| char::to_digit(c, 10).unwrap() as u8));
+        }
+        answer
+    }
+
+    pub(crate) fn to_vertex_graph(arr: &Array<u8>) -> VertexWeightedGraph<Point> {
+        let mut vertices: HashMap<Point, (u8, HashSet<Point, BuildPointHasher>), BuildPointHasher> =
+            HashMap::with_hasher(BuildPointHasher {});
+
+        for row in 0..arr.col_len() {
+            for col in 0..arr.row_len {
+                let height = arr.get(row, col);
+                let row_16 = row as u16;
+                let col_16 = col as u16;
+
+                let mut outgoing = HashSet::with_capacity_and_hasher(4, BuildPointHasher {});
+                if row > 0 {
+                    outgoing.insert(Point {
+                        x: row_16 - 1,
+                        y: col_16,
+                    });
                 }
-                if i < line.len() - 1 {
-                    outgoing.insert((i_16 + 1, j_16));
+                if row < arr.col_len() - 1 {
+                    outgoing.insert(Point {
+                        x: row_16 + 1,
+                        y: col_16,
+                    });
                 }
-                if j > 0 {
-                    outgoing.insert((i_16, j_16 - 1));
+                if col > 0 {
+                    outgoing.insert(Point {
+                        x: row_16,
+                        y: col_16 - 1,
+                    });
                 }
-                // TODO - deal correctly with non-square grids
-                if j < line.len() - 1 {
-                    outgoing.insert((i_16, j_16 + 1));
+                if col < arr.row_len - 1 {
+                    outgoing.insert(Point {
+                        x: row_16,
+                        y: col_16 + 1,
+                    });
                 }
-                vertices.insert((i_16, j_16), (height, outgoing));
+                vertices.insert(
+                    Point {
+                        x: row_16,
+                        y: col_16,
+                    },
+                    (height, outgoing),
+                );
             }
         }
 
         VertexWeightedGraph { vertices }
     }
 
-    pub fn input() -> VertexWeightedGraph<(u16, u16)> {
+    pub fn input() -> Array<u8> {
         parse(include_str!("../input.txt"))
     }
 
-    pub fn part_1(data: &VertexWeightedGraph<(u16, u16)>) -> u32 {
-        let edged = to_edge_weighted(&data);
-        let max = data.vertices.keys().max_by_key(|(x, y)| x + y).unwrap();
-        let edge_weight = shortest_path(&edged, (0, 0), *max).unwrap();
+    pub fn part_1(data: &Array<u8>) -> u32 {
+        let edged = to_edge_weighted(&to_vertex_graph(data));
+        let max = Point {
+            x: data.row_len as u16 - 1,
+            y: data.col_len() as u16 - 1,
+        };
+        let edge_weight = shortest_path(&edged, Point { x: 0, y: 0 }, max).unwrap();
 
-        let first_node = data.vertices.get(&(0,0)).unwrap().0 as u32;
-        let last_node = data.vertices.get(max).unwrap().0 as u32;
+        let first_node = data.get(0, 0) as u32;
+        let last_node = data.get(data.row_len - 1, data.col_len() - 1) as u32;
 
         (edge_weight + first_node + last_node) / 2 - first_node
     }
 
-    pub fn part_2(_data: &VertexWeightedGraph<(u16, u16)>) -> u32 {
-        panic!("TODO");
+    pub(crate) fn quintuple(arr: &Array<u8>) -> Array<u8> {
+        let row_len = 5 * arr.row_len;
+        let elts = vec![0u8; row_len * row_len];
+        let mut result = Array { row_len, elts };
+
+        for row in 0..arr.col_len() {
+            for col in 0..arr.row_len {
+                for x in 0..5 {
+                    for y in 0..5 {
+                        result.set(
+                            arr.row_len * x + row,
+                            arr.col_len() * y + col,
+                            (arr.get(row, col) + (x as u8) + (y as u8) - 1) % 9 + 1,
+                        );
+                    }
+                }
+            }
+        }
+
+        result
+    }
+
+    pub fn part_2(data: &Array<u8>) -> u32 {
+        let data = quintuple(data);
+        let edged = to_edge_weighted(&to_vertex_graph(&data));
+        let max = Point {
+            x: data.row_len as u16 - 1,
+            y: data.col_len() as u16 - 1,
+        };
+        let edge_weight = shortest_path(&edged, Point { x: 0, y: 0 }, max).unwrap();
+
+        let first_node = data.get(0, 0) as u32;
+        let last_node = data.get(data.row_len - 1, data.col_len() - 1) as u32;
+
+        (edge_weight + first_node + last_node) / 2 - first_node
     }
 }
 
