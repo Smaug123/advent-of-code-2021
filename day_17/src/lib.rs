@@ -129,9 +129,9 @@ pub mod day_17 {
                 hit_area = true;
             }
             max_y_coord = max(max_y_coord, state.position.y);
-            if state.velocity.x > 0 && state.position.x > data.max_x {
-                break;
-            } else if state.velocity.x < 0 && state.position.x < data.min_x {
+            if (state.velocity.x > 0 && state.position.x > data.max_x)
+                || (state.velocity.x < 0 && state.position.x < data.min_x)
+            {
                 break;
             }
         }
