@@ -5,9 +5,9 @@ pub mod day_15 {
     use std::hash::Hash;
 
     trait EdgeIter<'a, V, I>
-        where
-            I: IntoIterator<Item = (&'a V, &'a u8)>,
-            V: 'a,
+    where
+        I: IntoIterator<Item = (&'a V, u8)>,
+        V: 'a,
     {
         fn edges<'v>(&'a self, v: &'v V) -> Option<I>;
         fn vertex_count(&self) -> usize;
@@ -17,11 +17,29 @@ pub mod day_15 {
         edges: HashMap<V, HashMap<V, u8>>,
     }
 
-    impl<'a, V> EdgeIter<'a, V, std::collections::hash_map::Iter<'a, V, u8>> for EdgeWeightedGraph<V> where V: Eq + Hash + 'a {
-        fn edges<'v>(&'a self, v: &'v V) -> Option<std::collections::hash_map::Iter<'a, V, u8>>
-            {
+    impl<'a, V>
+        EdgeIter<
+            'a,
+            V,
+            std::iter::Map<
+                std::collections::hash_map::Iter<'a, V, u8>,
+                fn((&'a V, &'a u8)) -> (&'a V, u8),
+            >,
+        > for EdgeWeightedGraph<V>
+    where
+        V: Eq + Hash + 'a,
+    {
+        fn edges<'v>(
+            &'a self,
+            v: &'v V,
+        ) -> Option<
+            std::iter::Map<
+                std::collections::hash_map::Iter<'a, V, u8>,
+                fn((&'a V, &'a u8)) -> (&'a V, u8),
+            >,
+        > {
             let iter = self.edges.get(v)?;
-            Some(iter.iter())
+            Some(iter.iter().map(|(k, v)| (k, *v)))
         }
         fn vertex_count(&self) -> usize {
             self.edges.len()
@@ -31,7 +49,7 @@ pub mod day_15 {
     fn shortest_path<'a, V, I, J>(graph: &'a I, v1: V, v2: V) -> Option<u32>
     where
         V: Hash + Eq + std::fmt::Debug + 'a,
-        J: IntoIterator<Item = (&'a V, &'a u8)>,
+        J: IntoIterator<Item = (&'a V, u8)>,
         I: EdgeIter<'a, V, J>,
     {
         let mut to_visit: HashSet<&V> = HashSet::with_capacity(graph.vertex_count());
@@ -62,7 +80,7 @@ pub mod day_15 {
             for (dest, distance) in outgoing {
                 if !visited.contains(dest) {
                     to_visit.insert(dest);
-                    let distance_via_here = current_distance + *distance as u32;
+                    let distance_via_here = current_distance + distance as u32;
                     distances
                         .entry(dest)
                         .and_modify(|v| *v = min(*v, distance_via_here))
@@ -123,12 +141,30 @@ pub mod day_15 {
         vertices: HashMap<V, (u8, HashSet<V, BuildPointHasher>), BuildPointHasher>,
     }
 
-    struct VertexToEdgeWeightedGraph<V> {
-
-    }
-
-    impl<V> EdgeIter<V> for VertexToEdgeWeightedGraph<V> {
-
+    impl<'a, V>
+        EdgeIter<
+            'a,
+            V,
+            std::iter::Map<std::collections::hash_set::Iter<'a, V>, fn(&'a V) -> (&'a V, u8)>,
+        > for VertexWeightedGraph<V>
+    where
+        V: 'a + Eq + Hash,
+    {
+        fn edges<'v>(
+            &'a self,
+            v: &'v V,
+        ) -> Option<std::iter::Map<std::collections::hash_set::Iter<'a, V>, fn(&'a V) -> (&'a V, u8)>>
+        {
+            let (weight, edges) = self.vertices.get(v)?;
+            Some(
+                edges
+                    .iter()
+                    .map(|i| (i, weight + self.vertices.get(i).unwrap().0)),
+            )
+        }
+        fn vertex_count(&self) -> usize {
+            self.vertices.len()
+        }
     }
 
     fn to_edge_weighted<V>(v: &VertexWeightedGraph<V>) -> EdgeWeightedGraph<V>
