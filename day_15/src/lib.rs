@@ -4,18 +4,40 @@ pub mod day_15 {
     use std::collections::{HashMap, HashSet};
     use std::hash::Hash;
 
+    trait EdgeIter<'a, V, I>
+        where
+            I: IntoIterator<Item = (&'a V, &'a u8)>,
+            V: 'a,
+    {
+        fn edges<'v>(&'a self, v: &'v V) -> Option<I>;
+        fn vertex_count(&self) -> usize;
+    }
+
     pub struct EdgeWeightedGraph<V> {
         edges: HashMap<V, HashMap<V, u8>>,
     }
 
-    fn shortest_path<V>(graph: &EdgeWeightedGraph<V>, v1: V, v2: V) -> Option<u32>
-    where
-        V: Hash + Eq + std::fmt::Debug,
-    {
-        let mut to_visit: HashSet<&V> = HashSet::with_capacity(graph.edges.len());
-        let mut visited: HashSet<&V> = HashSet::with_capacity(graph.edges.len());
+    impl<'a, V> EdgeIter<'a, V, std::collections::hash_map::Iter<'a, V, u8>> for EdgeWeightedGraph<V> where V: Eq + Hash + 'a {
+        fn edges<'v>(&'a self, v: &'v V) -> Option<std::collections::hash_map::Iter<'a, V, u8>>
+            {
+            let iter = self.edges.get(v)?;
+            Some(iter.iter())
+        }
+        fn vertex_count(&self) -> usize {
+            self.edges.len()
+        }
+    }
 
-        let mut distances: HashMap<&V, u32> = HashMap::with_capacity(graph.edges.len());
+    fn shortest_path<'a, V, I, J>(graph: &'a I, v1: V, v2: V) -> Option<u32>
+    where
+        V: Hash + Eq + std::fmt::Debug + 'a,
+        J: IntoIterator<Item = (&'a V, &'a u8)>,
+        I: EdgeIter<'a, V, J>,
+    {
+        let mut to_visit: HashSet<&V> = HashSet::with_capacity(graph.vertex_count());
+        let mut visited: HashSet<&V> = HashSet::with_capacity(graph.vertex_count());
+
+        let mut distances: HashMap<&V, u32> = HashMap::with_capacity(graph.vertex_count());
         distances.insert(&v1, 0);
 
         let mut current_node = &v1;
@@ -30,14 +52,14 @@ pub mod day_15 {
             visited.insert(current_node);
             to_visit.remove(current_node);
 
-            let outgoing = match graph.edges.get(current_node) {
+            let outgoing = match graph.edges(current_node) {
                 None => {
                     panic!("Vertex did not have an entry in the outgoing edges");
                 }
                 Some(outgoing) => outgoing,
             };
 
-            for (dest, distance) in outgoing.iter() {
+            for (dest, distance) in outgoing {
                 if !visited.contains(dest) {
                     to_visit.insert(dest);
                     let distance_via_here = current_distance + *distance as u32;
@@ -99,6 +121,14 @@ pub mod day_15 {
 
     pub struct VertexWeightedGraph<V> {
         vertices: HashMap<V, (u8, HashSet<V, BuildPointHasher>), BuildPointHasher>,
+    }
+
+    struct VertexToEdgeWeightedGraph<V> {
+
+    }
+
+    impl<V> EdgeIter<V> for VertexToEdgeWeightedGraph<V> {
+
     }
 
     fn to_edge_weighted<V>(v: &VertexWeightedGraph<V>) -> EdgeWeightedGraph<V>
