@@ -1,45 +1,93 @@
 pub mod day_18 {
 
-    #[derive(Debug, PartialEq, Eq)]
+    use std::cmp::max;
+
+    #[derive(Debug)]
     pub enum PairEntry {
         Number(u8),
         Pair((usize, usize)),
     }
 
-    // Incredibly sad phantom lifetype parameter so that IntoIterator works
-    #[derive(Debug, PartialEq, Eq)]
-    pub struct Pair<'a> {
+    #[derive(Debug)]
+    pub struct Pair {
         pairs: Vec<PairEntry>,
         first: usize,
-        phantom: std::marker::PhantomData<&'a ()>,
     }
 
-    pub struct PairIterator<'a> {
-        current_pos: Vec<usize>,
-        pairs: &'a [PairEntry],
-    }
-
-    impl<'a> Iterator for PairIterator<'a> {
-        type Item = u8;
-
-        fn next(&mut self) -> Option<Self::Item> {
-            todo!()
+    // It makes no sense to clone a PairEntry, so do it manually.
+    impl Clone for Pair {
+        fn clone(&self) -> Self {
+            let mut pairs = Vec::with_capacity(self.pairs.len());
+            for p in self.pairs.iter() {
+                match p {
+                    PairEntry::Number(i) => {
+                        pairs.push(PairEntry::Number(*i));
+                    }
+                    PairEntry::Pair(i) => {
+                        pairs.push(PairEntry::Pair(*i));
+                    }
+                }
+            }
+            Pair {
+                pairs,
+                first: self.first,
+            }
         }
     }
 
-    impl<'a> IntoIterator for Pair<'a> {
-        type Item = u8;
-        type IntoIter = PairIterator<'a>;
+    pub struct PairIterator<'a> {
+        current_pos: Vec<(usize, u8, usize)>,
+        pairs: &'a [PairEntry],
+    }
 
-        fn into_iter(self) -> PairIterator<'a> {
+    #[derive(Debug)]
+    pub struct IterationEntry {
+        entry: usize,
+        value: u8,
+        depth: u8,
+        parent: usize,
+    }
+
+    impl<'a> Iterator for PairIterator<'a> {
+        type Item = IterationEntry;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            let (top, depth, parent) = self.current_pos.pop()?;
+
+            match self.pairs[top] {
+                PairEntry::Number(x) => Some(IterationEntry {
+                    entry: top,
+                    value: x,
+                    depth,
+                    parent,
+                }),
+                PairEntry::Pair((left, right)) => {
+                    self.current_pos.push((right, depth + 1, top));
+                    self.current_pos.push((left, depth + 1, top));
+                    self.next()
+                }
+            }
+        }
+    }
+
+    impl PartialEq for Pair {
+        fn eq(&self, other: &Self) -> bool {
+            format!("{}", self) == format!("{}", other)
+        }
+    }
+
+    impl Eq for Pair {}
+
+    impl Pair {
+        fn iter(&self) -> PairIterator {
             PairIterator {
-                current_pos: vec![self.first],
+                current_pos: vec![(self.first, 0, 0)],
                 pairs: &self.pairs,
             }
         }
     }
 
-    impl std::fmt::Display for Pair<'_> {
+    impl std::fmt::Display for Pair {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             let mut print_stack = vec![Ok(self.first)];
             while let Some(to_print) = print_stack.pop() {
@@ -66,7 +114,7 @@ pub mod day_18 {
         }
     }
 
-    pub(crate) fn concatenate<'a>(p1: &Pair<'a>, p2: &Pair<'a>) -> Pair<'a> {
+    pub(crate) fn concatenate(p1: &Pair, p2: &Pair) -> Pair {
         let mut pairs = Vec::with_capacity(p1.pairs.len() + p2.pairs.len() + 1);
         for entry in p1.pairs.iter() {
             match entry {
@@ -93,14 +141,10 @@ pub mod day_18 {
             }
         }
 
-        pairs.push(PairEntry::Pair((p1.pairs.len() - 1, pairs.len() - 1)));
+        pairs.push(PairEntry::Pair((p1.first, p1.pairs.len() + p2.first)));
         let first = pairs.len() - 1;
 
-        Pair {
-            pairs,
-            first,
-            phantom: std::marker::PhantomData,
-        }
+        Pair { pairs, first }
     }
 
     pub(crate) fn parse_line(s: &str) -> Pair {
@@ -146,8 +190,7 @@ pub mod day_18 {
         let first = pair_entries.len() - 1;
         Pair {
             pairs: pair_entries,
-            first: first,
-            phantom: std::marker::PhantomData,
+            first,
         }
     }
 
@@ -155,15 +198,83 @@ pub mod day_18 {
         s.split('\n').map(parse_line).collect()
     }
 
-    pub fn input() -> Vec<Pair<'static>> {
+    pub fn input() -> Vec<Pair> {
         parse(include_str!("../input.txt"))
     }
 
-    fn first_to_left(p: &Pair, entry: usize) -> Option<usize> {
-        todo!()
+    struct EitherSide {
+        left: Option<(usize, u8)>,
+        right: Option<(usize, u8)>,
     }
 
-    pub(crate) fn explode(p1: &mut Pair, entry: usize) {}
+    // entry is the first element of the pair
+    fn first_to_left_and_right(p: &Pair, entry: usize) -> EitherSide {
+        let mut iter = p.iter();
+        let mut prev = iter.next().unwrap();
+        let mut answer_left = None;
+        let mut ret = 0;
+
+        if prev.entry == entry {
+            ret = 1;
+        }
+
+        for current in iter {
+            match ret {
+                2 => {
+                    return EitherSide {
+                        left: answer_left,
+                        right: Some((current.entry, current.value)),
+                    };
+                }
+                1 => {
+                    ret += 1;
+                }
+                _ => {}
+            }
+            if current.entry == entry {
+                answer_left = Some((prev.entry, prev.value));
+                ret = 1;
+            }
+
+            prev = current;
+        }
+
+        EitherSide {
+            left: answer_left,
+            right: None,
+        }
+    }
+
+    pub(crate) fn explode(p: &mut Pair, entry: usize) {
+        match p.pairs[entry] {
+            PairEntry::Number(_) => {
+                panic!("Expected a pair!");
+            }
+            PairEntry::Pair((left, right)) => {
+                let left_right = first_to_left_and_right(p, left);
+                match left_right.left {
+                    None => {}
+                    Some((left_entry, left_value)) => match p.pairs[left] {
+                        PairEntry::Pair(_) => panic!("Expected a left entry, got a pair"),
+                        PairEntry::Number(left) => {
+                            p.pairs[left_entry] = PairEntry::Number(left_value + left);
+                        }
+                    },
+                };
+                match left_right.right {
+                    None => {}
+                    Some((right_entry, right_value)) => match p.pairs[right] {
+                        PairEntry::Pair(_) => panic!("Expected a right entry, got a pair"),
+                        PairEntry::Number(right) => {
+                            p.pairs[right_entry] = PairEntry::Number(right_value + right);
+                        }
+                    },
+                };
+            }
+        };
+
+        p.pairs[entry] = PairEntry::Number(0);
+    }
 
     pub(crate) fn split(p1: &mut Pair, entry: usize) {
         match p1.pairs[entry] {
@@ -180,26 +291,67 @@ pub mod day_18 {
         }
     }
 
-    pub(crate) fn add<'a>(p1: &Pair<'a>, p2: &Pair<'a>) -> Pair<'a> {
-        let concatenated = concatenate(p1, p2);
-        todo!()
+    pub(crate) fn reduce_step(p1: &mut Pair) -> bool {
+        for iteration in p1.iter() {
+            if iteration.depth > 4 {
+                explode(p1, iteration.parent);
+                return true;
+            }
+        }
+
+        for iteration in p1.iter() {
+            if iteration.value >= 10 {
+                split(p1, iteration.entry);
+                return true;
+            }
+        }
+
+        false
     }
 
-    pub(crate) fn magnitude(p1: &Pair) -> u32 {
-        panic!("");
+    pub(crate) fn reduce(p: &mut Pair) {
+        while reduce_step(p) {}
     }
 
-    pub(crate) fn final_sum<'a>(p1: &[Pair<'a>]) -> Pair<'a> {
-        panic!("");
+    pub(crate) fn add(p1: &Pair, p2: &Pair) -> Pair {
+        let mut concatenated = concatenate(p1, p2);
+        reduce(&mut concatenated);
+        concatenated
+    }
+
+    fn magnitude_inner(p: &Pair, entry: usize) -> u32 {
+        match p.pairs[entry] {
+            PairEntry::Pair((left, right)) => {
+                3 * magnitude_inner(p, left) + 2 * magnitude_inner(p, right)
+            }
+            PairEntry::Number(n) => (n as u32),
+        }
+    }
+
+    pub(crate) fn magnitude(p: &Pair) -> u32 {
+        magnitude_inner(p, p.first)
+    }
+
+    pub(crate) fn final_sum(p1: &[Pair]) -> Pair {
+        let mut iter = p1.iter();
+        let fst = iter.next().unwrap();
+
+        iter.fold(fst.clone(), |current, next| add(&current, next))
     }
 
     pub fn part_1(data: &[Pair]) -> u32 {
-        println!("{:?}", data);
-        panic!("TODO");
+        magnitude(&final_sum(data))
     }
 
-    pub fn part_2(data: &[Pair]) -> u64 {
-        panic!("TODO");
+    pub fn part_2(data: &[Pair]) -> u32 {
+        let mut best = 0;
+        for i in 0..data.len() {
+            for j in i + 1..data.len() {
+                best = max(best, magnitude(&add(&data[i], &data[j])))
+            }
+        }
+
+        best
     }
 }
 
@@ -235,6 +387,17 @@ mod tests {
 [1,[[[9,3],9],[[9,0],[0,7]]]]
 [[[5,[7,4]],7],1]
 [[[[4,2],2],6],[8,7]]";
+
+    static TEST_INPUT_5: &str = "[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]
+[[[5,[2,8]],4],[5,[[9,9],0]]]
+[6,[[[6,2],[5,6]],[[7,6],[4,7]]]]
+[[[6,[0,7]],[0,9]],[4,[9,[9,0]]]]
+[[[7,[6,4]],[3,[1,3]]],[[[5,5],1],9]]
+[[6,[[7,3],[3,2]]],[[[3,8],[5,7]],4]]
+[[[[5,4],[7,7]],8],[[8,3],8]]
+[[9,3],[[9,9],[6,[4,9]]]]
+[[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]
+[[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]";
 
     #[test]
     fn test_parse() {
@@ -300,27 +463,13 @@ mod tests {
             3488
         );
 
-        assert_eq!(
-            part_1(&parse(
-                "[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]
-[[[5,[2,8]],4],[5,[[9,9],0]]]
-[6,[[[6,2],[5,6]],[[7,6],[4,7]]]]
-[[[6,[0,7]],[0,9]],[4,[9,[9,0]]]]
-[[[7,[6,4]],[3,[1,3]]],[[[5,5],1],9]]
-[[6,[[7,3],[3,2]]],[[[3,8],[5,7]],4]]
-[[[[5,4],[7,7]],8],[[8,3],8]]
-[[9,3],[[9,9],[6,[4,9]]]]
-[[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]
-[[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]"
-            )),
-            4140
-        );
+        assert_eq!(part_1(&parse(TEST_INPUT_5)), 4140);
     }
 
     #[test]
     fn part2_known() {
-        //let data = parse(&TEST_INPUT);
-        //assert_eq!(part_2(&data), 112);
+        let data = parse(&TEST_INPUT_5);
+        assert_eq!(part_2(&data), 3993);
     }
 
     #[test]
