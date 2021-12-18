@@ -57,4 +57,4 @@ magnitude@Fold[reduce@*concat,nums[[1]],nums[[2;;]]]//AbsoluteTiming
 (*Part 2*)
 
 
-Max[magnitude[reduce[concat@@#]]&/@Subsets[nums,{2}]]//AbsoluteTiming
+Max[magnitude[reduce[concat@@#]]&/@With[{s=Subsets[nums,{2}]},Join[s,Reverse@s]]]//AbsoluteTiming
