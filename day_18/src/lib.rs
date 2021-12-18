@@ -346,8 +346,10 @@ pub mod day_18 {
     pub fn part_2(data: &[Pair]) -> u32 {
         let mut best = 0;
         for i in 0..data.len() {
-            for j in i + 1..data.len() {
-                best = max(best, magnitude(&add(&data[i], &data[j])))
+            for j in 0..data.len() {
+                if i != j {
+                    best = max(best, magnitude(&add(&data[i], &data[j])))
+                }
             }
         }
 
@@ -468,6 +470,16 @@ mod tests {
 
     #[test]
     fn part2_known() {
+        let sum = add(
+            &parse_line("[[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]"),
+            &parse_line("[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]"),
+        );
+        assert_eq!(
+            sum,
+            parse_line("[[[[7,8],[6,6]],[[6,0],[7,7]]],[[[7,8],[8,8]],[[7,9],[0,6]]]]")
+        );
+        assert_eq!(magnitude(&sum), 3993);
+
         let data = parse(&TEST_INPUT_5);
         assert_eq!(part_2(&data), 3993);
     }
