@@ -44,7 +44,7 @@ pub mod day_20 {
                         }
                     )?;
                 }
-                writeln!(f, "")?;
+                writeln!(f)?;
             }
             Ok(())
         }
@@ -149,7 +149,7 @@ pub mod day_20 {
 
         for col in 0..result.row_len {
             for row in 0..result.col_len() {
-                result.set(row, col, pixel_at(&key, &image, row, col, background));
+                result.set(row, col, pixel_at(key, image, row, col, background));
             }
         }
 
