@@ -11,26 +11,24 @@ pub mod array {
         T: 'a,
     {
         arr: &'a Array<T>,
-        curr_row: usize,
-        curr_col: usize,
+        curr_count: usize,
     }
 
     impl<'a, T> Iterator for ArrayIterator<'a, T>
     where
         T: 'a,
+        T: std::fmt::Display,
     {
         type Item = &'a T;
 
         fn next(&mut self) -> Option<Self::Item> {
-            let to_ret = self.arr.get(self.curr_row, self.curr_col);
-
-            self.curr_col += 1;
-            if self.curr_col >= self.arr.row_len {
-                self.curr_col = 0;
-                self.curr_row += 1;
+            if self.curr_count >= self.arr.elts.len() {
+                return None;
             }
 
-            to_ret
+            let to_ret = &self.arr.elts[self.curr_count];
+            self.curr_count += 1;
+            Some(to_ret)
         }
     }
 
@@ -96,8 +94,7 @@ pub mod array {
 
         pub fn iter(&self) -> ArrayIterator<'_, T> {
             ArrayIterator {
-                curr_row: 0,
-                curr_col: 0,
+                curr_count: 0,
                 arr: self,
             }
         }
@@ -121,5 +118,26 @@ pub mod array {
             }
             Ok(())
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::array::*;
+
+    #[test]
+    fn iteration() {
+        let data: Vec<_> = (1..100).collect();
+        let arr = Array::make(data.iter().cloned().collect(), 10);
+
+        assert_eq!(arr.iter().cloned().collect::<Vec<_>>(), data);
+    }
+
+    #[test]
+    fn from_rows() {
+        let data: Vec<Vec<_>> = (0..10).map(|row| (10 * row..=10 * row + 9).collect()).collect();
+        let arr = Array::from_rows(data.iter().map(|row| row.iter().cloned()));
+
+        assert_eq!(arr.iter().cloned().collect::<Vec<_>>(), (0..100).collect::<Vec<_>>());
     }
 }
