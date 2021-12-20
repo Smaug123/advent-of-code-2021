@@ -41,11 +41,11 @@ pub mod array {
         }
         pub fn get_clone(&self, row: usize, col: usize) -> Option<T>
         where
-            T: Copy,
+            T: Clone,
         {
             let index = row * self.row_len + col;
             if row < self.row_len && col < self.col_len() && index < self.elts.len() {
-                Some(self.elts[index])
+                Some(self.elts[index].clone())
             } else {
                 None
             }
@@ -58,9 +58,13 @@ pub mod array {
                 None
             }
         }
+        pub fn get_unsafe(&self, row: usize, col: usize) -> &T {
+            let index = row * self.row_len + col;
+            &self.elts[index]
+        }
         pub fn set(&mut self, row: usize, col: usize, val: T)
         where
-            T: Copy,
+            T: Clone,
         {
             self.elts[row * self.row_len + col] = val;
         }
@@ -68,6 +72,33 @@ pub mod array {
         /// Make a 2D array from its elements, given as concatenated rows.
         pub fn make(elts: Vec<T>, row_len: usize) -> Array<T> {
             Array { elts, row_len }
+        }
+
+        pub fn make_default(row_len: usize, col_len: usize, elt: T) -> Array<T>
+        where
+            T: Copy,
+        {
+            let mut v = Vec::with_capacity(row_len * col_len);
+            v.resize(row_len * col_len, elt);
+            Array { elts: v, row_len }
+        }
+
+        pub fn apply<F>(&mut self, f: F)
+        where
+            F: Fn(T) -> T,
+            T: Clone,
+        {
+            for elt in self.elts.iter_mut() {
+                *elt = f(elt.clone());
+            }
+        }
+
+        pub fn apply_at<F>(&mut self, row: usize, col: usize, f: F)
+        where
+            F: Fn(T) -> T,
+            T: Clone,
+        {
+            self.set(row, col, f(self.get(row, col).unwrap().clone()));
         }
 
         pub fn from_rows<I, J>(rows: I) -> Array<T>
