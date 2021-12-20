@@ -1,54 +1,6 @@
 pub mod day_20 {
 
-    // TODO: unify with day 9
-    #[derive(Debug, Clone)]
-    pub struct Array<T> {
-        row_len: usize,
-        elts: Vec<T>,
-    }
-
-    impl<T> Array<T> {
-        fn col_len(&self) -> usize {
-            self.elts.len() / self.row_len
-        }
-        fn get(&self, row: usize, col: usize) -> Option<T>
-        where
-            T: Copy,
-        {
-            let index = row * self.row_len + col;
-            if row < self.row_len && col < self.col_len() && index < self.elts.len() {
-                Some(self.elts[index])
-            } else {
-                None
-            }
-        }
-        fn set(&mut self, row: usize, col: usize, val: T)
-        where
-            T: Copy,
-        {
-            self.elts[row * self.row_len + col] = val;
-        }
-    }
-
-    impl std::fmt::Display for Array<bool> {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            for row in 0..self.row_len {
-                for col in 0..self.col_len() {
-                    write!(
-                        f,
-                        "{}",
-                        if self.get(row, col).unwrap() {
-                            'X'
-                        } else {
-                            '.'
-                        }
-                    )?;
-                }
-                writeln!(f)?;
-            }
-            Ok(())
-        }
-    }
+    use ::array::array::*;
 
     pub struct Data {
         pub(crate) key: [bool; 512],
@@ -94,10 +46,7 @@ pub mod day_20 {
         }
 
         Data {
-            image: Array {
-                row_len,
-                elts: image_elts,
-            },
+            image: Array::make(image_elts, row_len),
             key,
         }
     }
@@ -120,7 +69,7 @@ pub mod day_20 {
                 let new_bit = if row >= 1 && col >= 1 {
                     match source_image.get((row - 1) as usize, (col - 1) as usize) {
                         None => background,
-                        Some(v) => v,
+                        Some(v) => *v,
                     }
                 } else {
                     background
@@ -138,16 +87,13 @@ pub mod day_20 {
     }
 
     fn step(key: &[bool; 512], image: &Array<bool>, background: bool) -> (Array<bool>, bool) {
-        let new_len = (image.col_len() + 2) * (image.row_len + 2);
+        let new_len = (image.col_len() + 2) * (image.row_len() + 2);
         let mut new_elts = Vec::with_capacity(new_len);
         new_elts.resize(new_len, background);
 
-        let mut result = Array {
-            row_len: image.row_len + 2,
-            elts: new_elts,
-        };
+        let mut result = Array::make(new_elts, image.row_len() + 2);
 
-        for col in 0..result.row_len {
+        for col in 0..result.row_len() {
             for row in 0..result.col_len() {
                 result.set(row, col, pixel_at(key, image, row, col, background));
             }
@@ -163,7 +109,7 @@ pub mod day_20 {
             image = new_image;
             background = new_background;
         }
-        image.elts.iter().filter(|&i| *i).count() as u64
+        image.iter().filter(|&i| *i).count() as u64
     }
 
     pub fn part_2(data: &Data) -> u64 {
@@ -173,7 +119,7 @@ pub mod day_20 {
             image = new_image;
             background = new_background;
         }
-        image.elts.iter().filter(|&i| *i).count() as u64
+        image.iter().filter(|&i| *i).count() as u64
     }
 }
 
