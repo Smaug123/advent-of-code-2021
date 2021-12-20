@@ -299,6 +299,7 @@ dependencies = [
 name = "day_9"
 version = "0.1.0"
 dependencies = [
+ "array",
  "criterion",
 ]
 

@@ -52,7 +52,7 @@ pub mod array {
         }
         pub fn get(&self, row: usize, col: usize) -> Option<&T> {
             let index = row * self.row_len + col;
-            if row < self.row_len && col < self.col_len() && index < self.elts.len() {
+            if row < self.col_len() && col < self.row_len && index < self.elts.len() {
                 Some(&self.elts[index])
             } else {
                 None
@@ -135,9 +135,16 @@ mod tests {
 
     #[test]
     fn from_rows() {
-        let data: Vec<Vec<_>> = (0..10).map(|row| (10 * row..=10 * row + 9).collect()).collect();
+        let data: Vec<Vec<_>> = (0..12)
+            .map(|row| (10 * row..=10 * row + 9).collect())
+            .collect();
         let arr = Array::from_rows(data.iter().map(|row| row.iter().cloned()));
 
-        assert_eq!(arr.iter().cloned().collect::<Vec<_>>(), (0..100).collect::<Vec<_>>());
+        assert_eq!(
+            arr.iter().cloned().collect::<Vec<_>>(),
+            (0..120).collect::<Vec<_>>()
+        );
+        assert_eq!(arr.row_len(), 10);
+        assert_eq!(arr.col_len(), 12);
     }
 }

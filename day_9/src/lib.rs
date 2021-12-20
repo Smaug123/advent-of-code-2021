@@ -1,43 +1,12 @@
 pub mod day_9 {
 
-    #[derive(Debug, Clone)]
-    pub struct Array<T> {
-        row_len: usize,
-        elts: Vec<T>,
-    }
-
-    impl<T> Array<T> {
-        fn col_len(&self) -> usize {
-            self.elts.len() / self.row_len
-        }
-        fn get(&self, row: usize, col: usize) -> T
-        where
-            T: Copy,
-        {
-            self.elts[row * self.row_len + col]
-        }
-        fn set(&mut self, row: usize, col: usize, val: T)
-        where
-            T: Copy,
-        {
-            self.elts[row * self.row_len + col] = val;
-        }
-    }
+    use ::array::array::*;
 
     pub(crate) fn parse(s: &str) -> Array<u8> {
-        let mut answer = Array {
-            row_len: 0,
-            elts: Vec::new(),
-        };
-        for line in s.split('\n') {
-            if answer.row_len == 0 {
-                answer.row_len = line.len();
-            }
-            answer
-                .elts
-                .extend(line.chars().map(|c| char::to_digit(c, 10).unwrap() as u8));
-        }
-        answer
+        Array::from_rows(
+            s.split('\n')
+                .map(|line| line.chars().map(|c| char::to_digit(c, 10).unwrap() as u8)),
+        )
     }
 
     pub fn input() -> Array<u8> {
@@ -46,15 +15,18 @@ pub mod day_9 {
 
     pub fn part_1(data: &Array<u8>) -> u32 {
         let mut answer = 0;
+        let row_len = data.row_len();
         let col_len = data.col_len();
-        for col in 0..data.row_len {
+        for col in 0..row_len {
             for row in 0..col_len {
-                if (row == 0 || data.get(row - 1, col) > data.get(row, col))
-                    && (row == col_len - 1 || data.get(row, col) < data.get(row + 1, col))
-                    && (col == 0 || data.get(row, col - 1) > data.get(row, col))
-                    && (col == data.row_len - 1 || data.get(row, col) < data.get(row, col + 1))
+                if (row == 0 || data.get(row - 1, col).unwrap() > data.get(row, col).unwrap())
+                    && (row == col_len - 1
+                        || data.get(row, col).unwrap() < data.get(row + 1, col).unwrap())
+                    && (col == 0 || data.get(row, col - 1).unwrap() > data.get(row, col).unwrap())
+                    && (col == row_len - 1
+                        || data.get(row, col).unwrap() < data.get(row, col + 1).unwrap())
                 {
-                    answer += data.get(row, col) as u32 + 1;
+                    answer += *data.get(row, col).unwrap() as u32 + 1;
                 }
             }
         }
@@ -63,24 +35,24 @@ pub mod day_9 {
     }
 
     /// Flood-fill, returning the size of the given basin and setting the basin to 0.
-    fn flood_fill(data: &mut Array<u8>, _start_val: u8, row: usize, col: usize) -> usize {
-        let new_val = data.get(row, col);
+    fn flood_fill(data: &mut Array<u8>, row: usize, col: usize) -> usize {
+        let new_val = *data.get(row, col).unwrap();
         if new_val >= 9 {
             return 0;
         }
         data.set(row, col, 10);
         let mut ans = 1;
         if row < data.col_len() - 1 {
-            ans += flood_fill(data, new_val, row + 1, col);
+            ans += flood_fill(data, row + 1, col);
         }
         if row > 0 {
-            ans += flood_fill(data, new_val, row - 1, col);
+            ans += flood_fill(data, row - 1, col);
         }
-        if col < data.row_len - 1 {
-            ans += flood_fill(data, new_val, row, col + 1);
+        if col < data.row_len() - 1 {
+            ans += flood_fill(data, row, col + 1);
         }
         if col > 0 {
-            ans += flood_fill(data, new_val, row, col - 1);
+            ans += flood_fill(data, row, col - 1);
         }
 
         ans
@@ -89,9 +61,9 @@ pub mod day_9 {
     pub fn part_2(data: &Array<u8>) -> u32 {
         let mut data = data.clone();
         let mut answers: Vec<u32> = Vec::new();
-        for col in 0..data.row_len {
+        for col in 0..data.row_len() {
             for row in 0..data.col_len() {
-                let got = flood_fill(&mut data, 0, row, col) as u32;
+                let got = flood_fill(&mut data, row, col) as u32;
                 if got > 0 {
                     answers.push(got);
                 }
