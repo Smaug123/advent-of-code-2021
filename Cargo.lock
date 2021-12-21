@@ -259,7 +259,6 @@ dependencies = [
 name = "day_21"
 version = "0.1.0"
 dependencies = [
- "array",
  "criterion",
 ]
 
