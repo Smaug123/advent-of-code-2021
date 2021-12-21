@@ -256,6 +256,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "day_21"
+version = "0.1.0"
+dependencies = [
+ "array",
+ "criterion",
+]
+
+[[package]]
 name = "day_3"
 version = "0.1.0"
 dependencies = [
