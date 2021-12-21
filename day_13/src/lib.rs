@@ -1,36 +1,8 @@
 pub mod day_13 {
 
+    use ::array::array::*;
     use std::cmp::max;
     use std::fmt;
-
-    // TODO: commonise with day 9 and 11
-    #[derive(Debug, Clone)]
-    pub struct Array<T> {
-        row_len: usize,
-        elts: Vec<T>,
-    }
-
-    impl<T> Array<T> {
-        fn col_len(&self) -> usize {
-            self.elts.len() / self.row_len
-        }
-        fn get(&self, row: usize, col: usize) -> Option<T>
-        where
-            T: Copy,
-        {
-            if row * self.row_len + col >= self.elts.len() {
-                None
-            } else {
-                Some(self.elts[row * self.row_len + col])
-            }
-        }
-        fn set(&mut self, row: usize, col: usize, val: T)
-        where
-            T: Copy,
-        {
-            self.elts[row * self.row_len + col] = val;
-        }
-    }
 
     #[derive(Debug, Clone)]
     pub enum Axis {
@@ -59,17 +31,7 @@ pub mod day_13 {
 
     impl std::fmt::Display for Data {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            for row in 0..self.paper.col_len() {
-                for col in 0..self.paper.row_len {
-                    let entry = self.paper.get(row, col).unwrap();
-                    if entry {
-                        write!(f, "X")?;
-                    } else {
-                        write!(f, ".")?;
-                    }
-                }
-                writeln!(f)?;
-            }
+            writeln!(f, "{}", self.paper)?;
 
             for (axis, value) in self.reversed_fold_list.iter().rev() {
                 writeln!(f, "{}={}", axis, value)?;
@@ -211,10 +173,7 @@ pub mod day_13 {
 
         let elts = (0..(row_len * col_len)).map(|_| false).collect();
 
-        let mut paper = Array {
-            elts,
-            row_len: row_len as usize,
-        };
+        let mut paper = Array::make(elts, row_len as usize);
 
         for (col, row) in coordinates.iter() {
             paper.set(*row as usize, *col as usize, true);
@@ -240,8 +199,8 @@ pub mod day_13 {
             Axis::X => {
                 for col in (value + 1)..=(2 * value) {
                     for row in 0..data.paper.col_len() {
-                        let new_value = data.paper.get(row, 2 * value - col).unwrap()
-                            || data.paper.get(row, col).unwrap();
+                        let new_value = *data.paper.get_unsafe(row, 2 * value - col)
+                            || *data.paper.get_unsafe(row, col);
                         data.paper.set(row, 2 * value - col, new_value);
                         data.paper.set(row, col, false);
                     }
@@ -250,14 +209,9 @@ pub mod day_13 {
 
             Axis::Y => {
                 for row in (value + 1)..=(2 * value) {
-                    for col in 0..data.paper.row_len {
-                        let value_one = data.paper.get(2 * value - row, col).unwrap();
-                        let value_two = match data.paper.get(row, col) {
-                            None => {
-                                panic!("Unwrapping at row {} col {}, value {}", row, col, value);
-                            }
-                            Some(v) => v,
-                        };
+                    for col in 0..data.paper.row_len() {
+                        let value_one = *data.paper.get_unsafe(2 * value - row, col);
+                        let value_two = *data.paper.get_unsafe(row, col);
                         let new_value = value_one || value_two;
                         data.paper.set(2 * value - row, col, new_value);
                         data.paper.set(row, col, false);
@@ -273,10 +227,7 @@ pub mod day_13 {
         let mut data = data.clone();
         fold_once(&mut data).unwrap();
 
-        data.paper
-            .elts
-            .iter()
-            .fold(0, |i, &v| if v { i + 1 } else { i })
+        data.paper.iter().fold(0, |i, &v| if v { i + 1 } else { i })
     }
 
     pub fn part_2(data: &Data) -> String {
@@ -307,7 +258,7 @@ pub mod day_13 {
 
         for row in 0..max_y_fold {
             for col in 0..max_x_fold {
-                let character = if data.paper.get(row as usize, col as usize).unwrap() {
+                let character = if *data.paper.get_unsafe(row as usize, col as usize) {
                     '#'
                 } else {
                     '.'
