@@ -58,6 +58,14 @@ pub mod array {
                 None
             }
         }
+        pub fn get_mut(&mut self, row: usize, col: usize) -> Option<&mut T> {
+            let index = row * self.row_len + col;
+            if row < self.col_len() && col < self.row_len && index < self.elts.len() {
+                Some(&mut self.elts[index])
+            } else {
+                None
+            }
+        }
         pub fn get_unsafe(&self, row: usize, col: usize) -> &T {
             let index = row * self.row_len + col;
             &self.elts[index]
