@@ -324,7 +324,7 @@ pub mod day_18 {
             PairEntry::Pair((left, right)) => {
                 3 * magnitude_inner(p, left) + 2 * magnitude_inner(p, right)
             }
-            PairEntry::Number(n) => (n as u32),
+            PairEntry::Number(n) => n as u32,
         }
     }
 

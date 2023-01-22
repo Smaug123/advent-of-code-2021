@@ -173,7 +173,7 @@ pub mod day_13 {
 
         let elts = (0..(row_len * col_len)).map(|_| false).collect();
 
-        let mut paper = Array::make(elts, row_len as usize);
+        let mut paper = Array::make(elts, row_len);
 
         for (col, row) in coordinates.iter() {
             paper.set(*row as usize, *col as usize, true);
@@ -244,11 +244,10 @@ pub mod day_13 {
         let max_y_fold = data
             .reversed_fold_list
             .iter()
-            .filter_map(|(axis, v)| match axis {
+            .find_map(|(axis, v)| match axis {
                 Axis::X => None,
                 Axis::Y => Some(*v),
             })
-            .next()
             .unwrap();
 
         while let Some(()) = fold_once(&mut data) {}
