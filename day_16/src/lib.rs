@@ -133,34 +133,22 @@ pub mod day_16 {
             Packet::Operator(p) => match p.type_id {
                 0 => p.sub_packets.iter().map(evaluate).sum(),
                 1 => p.sub_packets.iter().map(evaluate).product(),
-                2 => p.sub_packets.iter().map(evaluate).min().unwrap() as u64,
-                3 => p.sub_packets.iter().map(evaluate).max().unwrap() as u64,
+                2 => p.sub_packets.iter().map(evaluate).min().unwrap(),
+                3 => p.sub_packets.iter().map(evaluate).max().unwrap(),
                 5 => {
                     let v1 = evaluate(&p.sub_packets[0]);
                     let v2 = evaluate(&p.sub_packets[1]);
-                    if v1 > v2 {
-                        1
-                    } else {
-                        0
-                    }
+                    u64::from(v1 > v2)
                 }
                 6 => {
                     let v1 = evaluate(&p.sub_packets[0]);
                     let v2 = evaluate(&p.sub_packets[1]);
-                    if v1 < v2 {
-                        1
-                    } else {
-                        0
-                    }
+                    u64::from(v1 < v2)
                 }
                 7 => {
                     let v1 = evaluate(&p.sub_packets[0]);
                     let v2 = evaluate(&p.sub_packets[1]);
-                    if v1 == v2 {
-                        1
-                    } else {
-                        0
-                    }
+                    u64::from(v1 == v2)
                 }
                 _ => panic!("Unexpected type"),
             },
