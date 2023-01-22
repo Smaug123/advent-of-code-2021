@@ -89,7 +89,7 @@ pub mod day_8 {
         let mut unshuffled = [false; 7];
         for (after_shuffle, before_shuffle) in identification.iter().enumerate() {
             // (0, 2); (1, 5); ...
-            unshuffled[*before_shuffle as usize] = d.segments[after_shuffle as usize];
+            unshuffled[*before_shuffle as usize] = d.segments[after_shuffle];
         }
 
         if !unshuffled[0] {
@@ -173,12 +173,7 @@ pub mod day_8 {
     }
 
     fn last_decreasing<const N: usize>(d: &[u8; N]) -> Option<usize> {
-        for i in (0..N - 1).rev() {
-            if d[i + 1] > d[i] {
-                return Some(i);
-            }
-        }
-        None
+        (0..N - 1).rev().find(|&i| d[i + 1] > d[i])
     }
 
     fn reverse<T, const N: usize>(d: &mut [T; N], i: usize)

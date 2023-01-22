@@ -50,8 +50,8 @@ pub mod day_3 {
         let mut eps = 0;
         for i in 0..N {
             let most = most_common(bits, i);
-            gamma = gamma * 2 + if most { 1 } else { 0 };
-            eps = eps * 2 + if most { 0 } else { 1 };
+            gamma = gamma * 2 + u32::from(most);
+            eps = eps * 2 + u32::from(!most);
         }
         gamma * eps
     }
@@ -117,7 +117,7 @@ pub mod day_3 {
     fn to_u16<const N: usize>(bits: [bool; N]) -> u16 {
         let mut ans = 0;
         for b in bits.iter() {
-            ans = ans * 2 + if *b { 1 } else { 0 };
+            ans = ans * 2 + u16::from(*b);
         }
 
         ans
@@ -148,7 +148,7 @@ pub mod day_3 {
                     return to_u16(*answer);
                 }
                 Err(b) => {
-                    least_common_arr[i as usize] = !b;
+                    least_common_arr[i] = !b;
                 }
             }
         }
