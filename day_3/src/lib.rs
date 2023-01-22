@@ -51,7 +51,7 @@ pub mod day_3 {
         for i in 0..N {
             let most = most_common(bits, i);
             gamma = gamma * 2 + u32::from(most);
-            eps = eps * 2 + u32::from(most);
+            eps = eps * 2 + u32::from(!most);
         }
         gamma * eps
     }
